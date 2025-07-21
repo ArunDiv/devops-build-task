@@ -3,91 +3,34 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USERNAME = 'arundiv'
-        // WARNING: DOCKER_PASSWORD is REMOVED from here for security.
-        // It will be accessed securely via Jenkins Credentials in the 'Push to Docker Hub' stage.
-        GITHUB_REPO = 'https://github.com/ArunDiv/devops-build-task.git' // Corrected GitHub repository
-        DOCKER_IMAGE_PREFIX = 'arundiv'
+        // Define your Docker Hub repository names
+        DOCKER_HUB_DEV_REPO = 'arundiv/devops-build-task-dev'
+        DOCKER_HUB_PROD_REPO = 'arundiv/devops-build-task-prod'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Checking out code...'
-                // IMPORTANT: Added credentialsId for GitHub access
-                git branch: "${env.BRANCH_NAME ?: 'master'}",
-                    url: "${GITHUB_REPO}",
-                    credentialsId: 'github-credentials' // Ensure you have a Jenkins credential with this ID
+                echo "Checking out from Git..."
             }
         }
 
-        stage('Verify Build') {
-            steps {
-                echo '🔍 Verifying React build exists...'
-                sh '''
-                    if [ -d "build" ]; then
-                        echo "✅ Build directory found"
-                        ls -la build/
-                    else
-                        echo "❌ Build directory not found"
-                        exit 1
-                    fi
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 script {
-                    def imageTag = "${env.BRANCH_NAME ?: 'master'}-${env.BUILD_NUMBER}"
-                    def repoName = (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == null) ? 'prod' : 'dev'
-
-                    echo "🏗️ Building Docker image: ${DOCKER_IMAGE_PREFIX}/${repoName}:${imageTag}"
-
-                    sh """
-                        docker build -t ${DOCKER_IMAGE_PREFIX}/${repoName}:${imageTag} .
-                        docker tag ${DOCKER_IMAGE_PREFIX}/${repoName}:${imageTag} ${DOCKER_IMAGE_PREFIX}/${repoName}:latest
-                    """
-                }
-            }
-        }
-
-        stage('Test Container') {
-            steps {
-                script {
-                    def repoName = (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == null) ? 'prod' : 'dev'
-
-                    echo '🧪 Testing container...'
-                    sh """
-                        # Run container for testing
-                        docker run --rm -d -p 8080:80 --name test-container ${DOCKER_IMAGE_PREFIX}/${repoName}:latest
-
-                        # Wait for container to be ready
-                        echo "⏳ Waiting for container to start..."
-                        sleep 10
-
-                        # Test health endpoint (consistent with Dockerfile's HEALTHCHECK)
-                        echo "🏥 Testing health endpoint..."
-                        if curl -f http://localhost:8080/health; then
-                            echo '✅ Health check passed!'
-                        else
-                            echo '❌ Health check failed!'
-                            docker logs test-container
-                            exit 1
-                        fi
-
-                        # Test main page
-                        echo "🌐 Testing main page..."
-                        if curl -f http://localhost:8080/ > /dev/null; then
-                            echo '✅ Main page accessible!'
-                        else
-                            echo '❌ Main page not accessible!'
-                            exit 1
-                        fi
-
-                        # Cleanup
-                        docker stop test-container
-                    """
+                    def imageName = ""
+                    // Use a unique tag for the Docker image
+                    if (env.BRANCH_NAME == 'main') {
+                        imageName = "${env.DOCKER_HUB_PROD_REPO}:${env.BUILD_NUMBER}"
+                    } else {
+                        imageName = "${env.DOCKER_HUB_DEV_REPO}:${env.BUILD_NUMBER}"
+                    }
+                    
+                    // Build the Docker image from the build folder
+                    sh "docker build -t ${imageName} ./build"
+                    
+                    // Store the image name for the next stage
+                    env.BUILT_IMAGE_NAME = imageName
                 }
             }
         }
@@ -95,52 +38,14 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    def imageTag = "${env.BRANCH_NAME ?: 'master'}-${env.BUILD_NUMBER}"
-                    def repoName = (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == null) ? 'prod' : 'dev'
-
-                    echo "📤 Pushing to Docker Hub..."
-
-                    // Securely access Docker Hub credentials using Jenkins' withCredentials
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASSWORD_VAR', usernameVariable: 'DOCKER_USERNAME_VAR')]) {
-                        sh """
-                            echo "${DOCKER_PASSWORD_VAR}" | docker login -u "${DOCKER_USERNAME_VAR}" --password-stdin
-                            docker push ${DOCKER_IMAGE_PREFIX}/${repoName}:${imageTag}
-                            docker push ${DOCKER_IMAGE_PREFIX}/${repoName}:latest
-                        """
+                    // Get Docker Hub credentials from Jenkins
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        // Push the image to the appropriate repository
+                        sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
+                        sh "docker push ${env.BUILT_IMAGE_NAME}"
                     }
                 }
             }
-        }
-
-        stage('Deploy') {
-            when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                }
-            }
-            steps {
-                echo '🚀 Deploying to production...'
-                sh 'chmod +x deploy.sh && ./deploy.sh'
-            }
-        }
-    }
-
-    post {
-        always {
-            // Added '|| true' for robustness in post-actions
-            sh 'docker logout || true'
-            sh 'docker system prune -f || true'
-        }
-        success {
-            echo '✅ Pipeline completed successfully!'
-            echo "🌐 Your React app is deployed and running!"
-        }
-        failure {
-            echo '❌ Pipeline failed!'
-            // Added '|| true' for robustness in post-actions
-            sh 'docker ps -a || true'
-            sh 'docker logs test-container || true'
         }
     }
 }

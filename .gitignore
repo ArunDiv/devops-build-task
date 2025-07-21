@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -48,3 +49,10 @@ coverage/
 # Build artifacts
 *.tgz
 *.tar.gz
+=======
+inode_modules
+build
+.env
+.idea
+*.log
+>>>>>>> ffbd104 (Add gitignore and dockerignore files)

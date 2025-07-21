@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node modules
 node_modules/
 npm-debug.log*
@@ -46,3 +47,10 @@ coverage/
 
 # Scripts (optional - you may want to keep these)
 # *.sh
+=======
+node_modules
+.git
+.gitignore
+.env
+.dockerignore
+>>>>>>> ffbd104 (Add gitignore and dockerignore files)
