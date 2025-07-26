@@ -1,20 +1,19 @@
 #!/bin/bash
 
 # A simple script to deploy the Docker container on the application server
+# This script is executed remotely by Jenkins
 
-CONTAINER_NAME="devops-app"
-# Adjust the image name to be dynamic, based on what Jenkins pushes.
-# For now, let's use the 'latest' tag for simplicity,
-# but ideally, Jenkins would pass a specific build tag.
-IMAGE_NAME="arundiv/devops-build-task-dev:latest" # Assuming dev for now, Jenkins will decide prod/dev
+# Ensure IMAGE_NAME and CONTAINER_NAME are passed as environment variables from Jenkins.
+# If not set, provide defaults or exit with error.
+: "${IMAGE_NAME:?Error: IMAGE_NAME environment variable not set}"
+: "${CONTAINER_NAME:?Error: CONTAINER_NAME environment variable not set}"
 
-# Stop and remove any existing container
-echo "Stopping and removing existing container (if any)..."
+echo "Stopping and removing existing container (if any): $CONTAINER_NAME"
 docker stop $CONTAINER_NAME || true
 docker rm $CONTAINER_NAME || true
 
-# Pull the latest image from Docker Hub
-echo "Pulling latest image: $IMAGE_NAME"
+# Pull the latest image from Docker Hub (this will now use the IMAGE_NAME passed by Jenkins)
+echo "Pulling image: $IMAGE_NAME"
 docker pull $IMAGE_NAME
 
 # Run the new container
