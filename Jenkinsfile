@@ -69,7 +69,7 @@ pipeline {
                         def remoteCommand = """
                             export IMAGE_NAME='${env.BUILT_IMAGE_FULL_NAME}'
                             export CONTAINER_NAME='${env.APP_CONTAINER_NAME}'
-                            /home/${env.APP_SERVER_USER}/devops-build/deploy.sh
+                            /home/${env.APP_SERVER_USER}/Docker/devops-build/deploy.sh
                         """
                         sh "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${env.APP_SERVER_USER}@${env.APP_SERVER_IP} '${remoteCommand}'"
                     }
