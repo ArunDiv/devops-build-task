@@ -9,7 +9,7 @@ pipeline {
         // Define the name of the Docker container on the application server
         APP_CONTAINER_NAME = 'devops-app'
         // IP address or hostname of your Application Server (Instance 2)
-        APP_SERVER_IP = 'YOUR_APPLICATION_SERVER_PUBLIC_IP' // <--- IMPORTANT: REPLACE THIS
+        APP_SERVER_IP = '65.0.125.165' // <--- IMPORTANT: REPLACE THIS
         // SSH username for connecting to the Application Server
         APP_SERVER_USER = 'ubuntu' // <--- IMPORTANT: Verify this is the correct SSH user
         // Jenkins credential ID for SSH connection to Application Server
