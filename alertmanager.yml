@@ -1,0 +1,15 @@
+---
+global:
+  resolve_timeout: 5m
+route:
+  receiver: 'email-alert'
+receivers:
+  - name: 'email-alert'
+    email_configs:
+      - to: 'arunlegend125@gmail.com'
+        from: 'alertmanager@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'arunlegend125@gmail.com'
+        auth_password: 'nhnq uzag ytve fyix'
+        auth_identity: 'arunlegend125@gmail.com'
+        require_tls: true

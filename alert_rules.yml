@@ -1,0 +1,18 @@
+# /etc/prometheus/rules/high-cpu.yml
+# High CPU usage alert rule
+---
+groups:
+  - name: node_exporter_alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: >
+          100 - (avg by(instance)
+          (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: >
+            The CPU usage is {{ printf "%.1f" $value }}%
+            on {{ $labels.instance }} for more than 2 minutes.

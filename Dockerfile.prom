@@ -1,0 +1,11 @@
+FROM prom/prometheus
+
+WORKDIR /prometheusAPP
+
+COPY ./prometheus.yml /etc/prometheus/prometheus.yml
+
+COPY ./alert_rules.yml /etc/prometheus/alert_rules.yml
+
+EXPOSE 9090
+
+CMD ["/bin/prometheus", "--config.file=/etc/prometheus/prometheus.yml"]

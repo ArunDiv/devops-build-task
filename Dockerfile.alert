@@ -1,0 +1,10 @@
+FROM prom/alertmanager
+
+WORKDIR /alertmanagerAPP
+
+COPY ./alertmanager.yml /etc/alertmanager/alertmanager.yml
+
+EXPOSE 9093
+
+CMD ["/bin/alertmanager", "--config.file=/etc/alertmanager/alertmanager.yml"]
+
