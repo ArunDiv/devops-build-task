@@ -1,9 +1,16 @@
-# /etc/prometheus/rules/high-cpu.yml
-# High CPU usage alert rule
 ---
 groups:
-  - name: node_exporter_alerts
+  - name: app_alerts
     rules:
+      - alert: ApplicationDown
+        expr: up{job="application"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Application is down"
+          description: "The application has been down for more than 1 minute"
+
       - alert: HighCpuUsage
         expr: >
           100 - (avg by(instance)
@@ -12,7 +19,5 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High CPU usage on {{ $labels.instance }}"
-          description: >
-            The CPU usage is {{ printf "%.1f" $value }}%
-            on {{ $labels.instance }} for more than 2 minutes.
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 2 minutes"
