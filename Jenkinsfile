@@ -1,4 +1,4 @@
-// Jenkinsfile #helldearo
+// Jenkinsfile #hell
 pipeline {
     agent any
 
